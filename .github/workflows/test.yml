@@ -77,7 +77,7 @@ jobs:
         fi
         
         # Verify patch content
-        if ! grep -q "--- a/" test/output.patch; then
+        if ! grep -q -- "--- a/" test/output.patch; then
           echo "Patch does not contain proper header"
           exit 1
         fi
