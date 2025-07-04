@@ -102,41 +102,41 @@ jobs:
       run: |
         # Create files with multiple changes
         cat > test/multi_source.php << 'EOF'
-<?php
-class MultiTest {
-    private $old1;
-    private $old2;
-    
-    public function method1() {
-        return $this->old1;
-    }
-    
-    public function method2() {
-        return $this->old2;
-    }
-}
-EOF
+        <?php
+        class MultiTest {
+            private $old1;
+            private $old2;
+            
+            public function method1() {
+                return $this->old1;
+            }
+            
+            public function method2() {
+                return $this->old2;
+            }
+        }
+        EOF
         
         cat > test/multi_patched.php << 'EOF'
-<?php
-class MultiTest {
-    private $new1;
-    private $old2;
-    private $new3;
-    
-    public function method1() {
-        return $this->new1;
-    }
-    
-    public function method2() {
-        return $this->old2;
-    }
-    
-    public function method3() {
-        return $this->new3;
-    }
-}
-EOF
+        <?php
+        class MultiTest {
+            private $new1;
+            private $old2;
+            private $new3;
+            
+            public function method1() {
+                return $this->new1;
+            }
+            
+            public function method2() {
+                return $this->old2;
+            }
+            
+            public function method3() {
+                return $this->new3;
+            }
+        }
+        EOF
         
         # Test multiple changes
         ./wswcli patchvendor test/multi_source.php test/multi_patched.php test/multi_output.patch
