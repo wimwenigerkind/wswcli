@@ -1,4 +1,4 @@
-project_name: go-cmd-project-platform-template
+project_name: wswcli
 
 before:
   hooks:
@@ -48,17 +48,17 @@ changelog:
       - '^test:'
 
 brews:
-  - name: go-cmd-project-platform-template
-    description: "go-cmd-project-platform-template"
-    homepage: "https://github.com/wimwenigerkind/go-cmd-project-platform-template"
+  - name: wswcli
+    description: "wswcli"
+    homepage: "https://github.com/wimwenigerkind/wswcli"
     license: "MIT"
     repository:
       owner: wimwenigerkind
-      name: homebrew-tab
+      name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
     install: |
-      bin.install "go-cmd-project-platform-template"
+      bin.install "wswcli"
     test: |
-      system "#{bin}/go-cmd-project-platform-template", "--version"
+      system "#{bin}/wswcli", "--version"

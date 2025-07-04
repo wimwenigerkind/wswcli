@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-cmd-project-platform-template/cmd"
+	"github.com/wimwenigerkind/wswcli/cmd"
 )
 
 var (

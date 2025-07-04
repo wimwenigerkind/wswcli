@@ -13,9 +13,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "PLACEHOLDER_USE",
-	Short: "PLACEHOLDER_SHORT",
-	Long:  "PLACEHOLDER_LONG",
+	Use:   "wswcli",
+	Short: "Wim Shopware CLI",
+	Long:  "Wim Shopware CLI",
 }
 
 func SetVersionInfo(v, c, d string) {

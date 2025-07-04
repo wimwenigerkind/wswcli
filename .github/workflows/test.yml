@@ -1,0 +1,186 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.21, 1.22]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Run tests with coverage
+      run: go test -v -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.22
+
+    - name: Build binary
+      run: go build -o wswcli .
+
+    - name: Test basic functionality
+      run: |
+        # Create test files
+        mkdir -p test/vendor/shopware/core/Framework/Plugin
+        echo '<?php class Test { public function old() { return "old"; } }' > test/source.php
+        echo '<?php class Test { public function new() { return "new"; } }' > test/patched.php
+        
+        # Test direct arguments
+        ./wswcli patchvendor test/source.php test/patched.php test/output.patch
+        
+        # Verify patch was created
+        if [ ! -f test/output.patch ]; then
+          echo "Patch file was not created"
+          exit 1
+        fi
+        
+        # Verify patch content
+        if ! grep -q "--- a/" test/output.patch; then
+          echo "Patch does not contain proper header"
+          exit 1
+        fi
+
+    - name: Test with vendor structure
+      run: |
+        # Create vendor structure
+        mkdir -p test/vendor/shopware/core/Framework/Plugin
+        echo '<?php class PluginManager { private $plugins = []; }' > test/vendor/shopware/core/Framework/Plugin/PluginManager.php
+        echo '<?php class PluginManager { private $plugins = []; private $cache; }' > test/patched_plugin.php
+        
+        # Test with vendor path
+        ./wswcli patchvendor test/vendor/shopware/core/Framework/Plugin/PluginManager.php test/patched_plugin.php test/vendor_output.patch
+        
+        # Verify vendor path trimming
+        if ! grep -q "shopware/core" test/vendor_output.patch; then
+          echo "Vendor path was not properly trimmed"
+          exit 1
+        fi
+
+    - name: Test multiple changes
+      run: |
+        # Create files with multiple changes
+        cat > test/multi_source.php << 'EOF'
+<?php
+class MultiTest {
+    private $old1;
+    private $old2;
+    
+    public function method1() {
+        return $this->old1;
+    }
+    
+    public function method2() {
+        return $this->old2;
+    }
+}
+EOF
+        
+        cat > test/multi_patched.php << 'EOF'
+<?php
+class MultiTest {
+    private $new1;
+    private $old2;
+    private $new3;
+    
+    public function method1() {
+        return $this->new1;
+    }
+    
+    public function method2() {
+        return $this->old2;
+    }
+    
+    public function method3() {
+        return $this->new3;
+    }
+}
+EOF
+        
+        # Test multiple changes
+        ./wswcli patchvendor test/multi_source.php test/multi_patched.php test/multi_output.patch
+        
+        # Verify multiple hunks
+        hunk_count=$(grep -c "@@" test/multi_output.patch || true)
+        if [ "$hunk_count" -eq 0 ]; then
+          echo "No hunks found in patch with multiple changes"
+          exit 1
+        fi
+
+    - name: Test error handling
+      run: |
+        # Test with non-existent source
+        if ./wswcli patchvendor nonexistent.php test/patched.php test/error.patch 2>/dev/null; then
+          echo "Should have failed with non-existent source"
+          exit 1
+        fi
+        
+        # Test with same source and patched
+        if ./wswcli patchvendor test/source.php test/source.php test/error.patch 2>/dev/null; then
+          echo "Should have failed with same source and patched"
+          exit 1
+        fi
+        
+        # Test with different extensions
+        echo "test" > test/source.txt
+        if ./wswcli patchvendor test/source.txt test/patched.php test/error.patch 2>/dev/null; then
+          echo "Should have failed with different extensions"
+          exit 1
+        fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.22
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=5m
