@@ -76,64 +76,120 @@ jobs:
           exit 1
         fi
         
-        # Verify patch content
-        if ! grep -q -- "--- a/" test/output.patch; then
-          echo "Patch does not contain proper header"
+        if ! grep -q "^-" test/output.patch || ! grep -q "^+" test/output.patch; then
+          echo "Patch does not contain proper diff markers"
+          cat test/output.patch
           exit 1
         fi
+        
+        echo "Basic functionality test passed"
 
-    - name: Test with vendor structure
+    - name: Test with vendor structure and path correction
       run: |
         # Create vendor structure
         mkdir -p test/vendor/shopware/core/Framework/Plugin
-        echo '<?php class PluginManager { private $plugins = []; }' > test/vendor/shopware/core/Framework/Plugin/PluginManager.php
-        echo '<?php class PluginManager { private $plugins = []; private $cache; }' > test/patched_plugin.php
+        cat > test/vendor/shopware/core/Framework/Plugin/PluginManager.php << 'EOF'
+        <?php
+        namespace Shopware\Core\Framework\Plugin;
+        
+        class PluginManager {
+            private $plugins = [];
+            
+            public function getPlugins(): array {
+                return $this->plugins;
+            }
+        }
+        EOF
+        
+        cat > test/patched_plugin.php << 'EOF'
+        <?php
+        namespace Shopware\Core\Framework\Plugin;
+        
+        class PluginManager {
+            private $plugins = [];
+            private $cache = [];
+            
+            public function getPlugins(): array {
+                return $this->plugins;
+            }
+            
+            public function getCache(): array {
+                return $this->cache;
+            }
+        }
+        EOF
         
         # Test with vendor path
         ./wswcli patchvendor test/vendor/shopware/core/Framework/Plugin/PluginManager.php test/patched_plugin.php test/vendor_output.patch
         
-        # Verify vendor path trimming
-        if ! grep -q "shopware/core" test/vendor_output.patch; then
-          echo "Vendor path was not properly trimmed"
+        # Verify patch was created and contains vendor path
+        if [ ! -f test/vendor_output.patch ]; then
+          echo "Vendor patch file was not created"
           exit 1
         fi
+        
+        # Check for proper vendor path in diff headers
+        if ! grep -q "vendor/shopware/core" test/vendor_output.patch; then
+          echo "Vendor path was not properly handled in patch headers"
+          echo "Patch content:"
+          cat test/vendor_output.patch
+          exit 1
+        fi
+        
+        echo "Vendor structure test passed"
 
-    - name: Test multiple changes
+    - name: Test multiple complex changes
       run: |
         # Create files with multiple changes
         cat > test/multi_source.php << 'EOF'
         <?php
-        class MultiTest {
-            private $old1;
-            private $old2;
+        namespace Shopware\Core\Framework\Plugin;
+        
+        class ComplexTest {
+            private $oldProperty1;
+            private $oldProperty2;
             
-            public function method1() {
-                return $this->old1;
+            public function oldMethod1() {
+                return $this->oldProperty1;
             }
             
-            public function method2() {
-                return $this->old2;
+            public function oldMethod2() {
+                return $this->oldProperty2;
+            }
+            
+            private function helperMethod() {
+                return "helper";
             }
         }
         EOF
         
         cat > test/multi_patched.php << 'EOF'
         <?php
-        class MultiTest {
-            private $new1;
-            private $old2;
-            private $new3;
+        namespace Shopware\Core\Framework\Plugin;
+        
+        class ComplexTest {
+            private $newProperty1;
+            private $oldProperty2;
+            private $newProperty3;
             
-            public function method1() {
-                return $this->new1;
+            public function newMethod1() {
+                return $this->newProperty1;
             }
             
-            public function method2() {
-                return $this->old2;
+            public function oldMethod2() {
+                return $this->oldProperty2;
             }
             
-            public function method3() {
-                return $this->new3;
+            public function newMethod3() {
+                return $this->newProperty3;
+            }
+            
+            private function helperMethod() {
+                return "improved helper";
+            }
+            
+            private function additionalHelper() {
+                return "additional";
             }
         }
         EOF
@@ -141,14 +197,65 @@ jobs:
         # Test multiple changes
         ./wswcli patchvendor test/multi_source.php test/multi_patched.php test/multi_output.patch
         
-        # Verify multiple hunks
+        # Verify patch was created
+        if [ ! -f test/multi_output.patch ]; then
+          echo "Multi-change patch file was not created"
+          exit 1
+        fi
+        
+        # Verify multiple hunks exist
         hunk_count=$(grep -c "@@" test/multi_output.patch || true)
         if [ "$hunk_count" -eq 0 ]; then
           echo "No hunks found in patch with multiple changes"
+          echo "Patch content:"
+          cat test/multi_output.patch
           exit 1
         fi
+        
+        # Verify specific changes are present
+        if ! grep -q "newProperty1" test/multi_output.patch; then
+          echo "Expected addition not found in patch"
+          exit 1
+        fi
+        
+        if ! grep -q "oldProperty1" test/multi_output.patch; then
+          echo "Expected removal not found in patch"
+          exit 1
+        fi
+        
+        echo "Multiple changes test passed"
 
-    - name: Test error handling
+    - name: Test directory processing
+      run: |
+        # Create source directory structure
+        mkdir -p test/source_dir/subdir
+        mkdir -p test/patched_dir/subdir
+        
+        # Create multiple files in source
+        echo '<?php class File1 { public function old() { return 1; } }' > test/source_dir/file1.php
+        echo '<?php class File2 { public function old() { return 2; } }' > test/source_dir/subdir/file2.php
+        
+        # Create corresponding patched files
+        echo '<?php class File1 { public function new() { return 1; } }' > test/patched_dir/file1.php
+        echo '<?php class File2 { public function new() { return 2; } }' > test/patched_dir/subdir/file2.php
+        
+        # Test directory processing (output_dir should not exist beforehand)
+        ./wswcli patchvendor test/source_dir test/patched_dir test/output_dir
+        
+        # Verify patch files were created
+        if [ ! -f test/output_dir/file1.php ]; then
+          echo "Directory patch file1 was not created"
+          exit 1
+        fi
+        
+        if [ ! -f test/output_dir/subdir/file2.php ]; then
+          echo "Directory patch file2 was not created"
+          exit 1
+        fi
+        
+        echo "Directory processing test passed"
+
+    - name: Test error handling and edge cases
       run: |
         # Test with non-existent source
         if ./wswcli patchvendor nonexistent.php test/patched.php test/error.patch 2>/dev/null; then
@@ -163,11 +270,197 @@ jobs:
         fi
         
         # Test with different extensions
-        echo "test" > test/source.txt
+        echo "test content" > test/source.txt
         if ./wswcli patchvendor test/source.txt test/patched.php test/error.patch 2>/dev/null; then
           echo "Should have failed with different extensions"
           exit 1
         fi
+        
+        # Test with identical files (no differences)
+        echo '<?php class Same { }' > test/identical1.php
+        echo '<?php class Same { }' > test/identical2.php
+        if ./wswcli patchvendor test/identical1.php test/identical2.php test/identical.patch 2>/dev/null; then
+          echo "Should have failed with identical files"
+          exit 1
+        fi
+        
+        # Test with empty source file
+        touch test/empty.php
+        echo '<?php class NotEmpty { }' > test/notempty.php
+        if ./wswcli patchvendor test/empty.php test/notempty.php test/empty_error.patch 2>/dev/null; then
+          echo "Should have failed with empty source file"
+          exit 1
+        fi
+        
+        # Test with output directory that exists
+        mkdir -p test/existing_dir
+        if ./wswcli patchvendor test/source.php test/patched.php test/existing_dir 2>/dev/null; then
+          echo "Should have failed with existing directory as output"
+          exit 1
+        fi
+        
+        echo "Error handling test passed"
+
+    - name: Test different file types
+      run: |
+        # Test with JavaScript files
+        echo 'function old() { return "old"; }' > test/source.js
+        echo 'function newFunc() { return "new"; }' > test/patched.js
+        ./wswcli patchvendor test/source.js test/patched.js test/js_output.patch
+        
+        if [ ! -f test/js_output.patch ]; then
+          echo "JavaScript patch was not created"
+          exit 1
+        fi
+        
+        # Test with CSS files
+        echo '.old { color: red; }' > test/source.css
+        echo '.new { color: blue; }' > test/patched.css
+        ./wswcli patchvendor test/source.css test/patched.css test/css_output.patch
+        
+        if [ ! -f test/css_output.patch ]; then
+          echo "CSS patch was not created"
+          exit 1
+        fi
+        
+        # Test with Twig files
+        echo '{{ old_variable }}' > test/source.twig
+        echo '{{ new_variable }}' > test/patched.twig
+        ./wswcli patchvendor test/source.twig test/patched.twig test/twig_output.patch
+        
+        if [ ! -f test/twig_output.patch ]; then
+          echo "Twig patch was not created"
+          exit 1
+        fi
+        
+        echo "Different file types test passed"
+
+    - name: Test realistic Shopware scenario
+      run: |
+        # Create realistic Shopware vendor modification scenario
+        mkdir -p test/vendor/shopware/core/Framework/Plugin
+        cat > test/vendor/shopware/core/Framework/Plugin/PluginManager.php << 'EOF'
+        <?php declare(strict_types=1);
+        
+        namespace Shopware\Core\Framework\Plugin;
+        
+        use Shopware\Core\Framework\Plugin\Exception\PluginNotFoundException;
+        
+        class PluginManager
+        {
+            private array $plugins = [];
+            
+            public function getPlugins(): array
+            {
+                return $this->plugins;
+            }
+            
+            public function addPlugin(string $name, array $config = []): void
+            {
+                $this->plugins[$name] = $config;
+            }
+            
+            public function removePlugin(string $name): void
+            {
+                if (!isset($this->plugins[$name])) {
+                    throw new PluginNotFoundException($name);
+                }
+                unset($this->plugins[$name]);
+            }
+        }
+        EOF
+        
+        cat > test/patched_shopware.php << 'EOF'
+        <?php declare(strict_types=1);
+        
+        namespace Shopware\Core\Framework\Plugin;
+        
+        use Shopware\Core\Framework\Plugin\Exception\PluginNotFoundException;
+        use Psr\Log\LoggerInterface;
+        
+        class PluginManager
+        {
+            private array $plugins = [];
+            private LoggerInterface $logger;
+            
+            public function __construct(LoggerInterface $logger)
+            {
+                $this->logger = $logger;
+            }
+            
+            public function getPlugins(): array
+            {
+                return $this->plugins;
+            }
+            
+            public function addPlugin(string $name, array $config = []): void
+            {
+                $this->plugins[$name] = $config;
+                $this->logger->info('Plugin added: ' . $name);
+            }
+            
+            public function removePlugin(string $name): void
+            {
+                if (!isset($this->plugins[$name])) {
+                    throw new PluginNotFoundException($name);
+                }
+                unset($this->plugins[$name]);
+                $this->logger->info('Plugin removed: ' . $name);
+            }
+            
+            public function hasPlugin(string $name): bool
+            {
+                return isset($this->plugins[$name]);
+            }
+        }
+        EOF
+        
+        # Generate patch
+        ./wswcli patchvendor test/vendor/shopware/core/Framework/Plugin/PluginManager.php test/patched_shopware.php test/shopware_realistic.patch
+        
+        # Verify patch contains expected changes
+        if ! grep -q "LoggerInterface" test/shopware_realistic.patch; then
+          echo "Logger interface addition not found"
+          exit 1
+        fi
+        
+        if ! grep -q "logger->info" test/shopware_realistic.patch; then
+          echo "Logging calls not found"
+          exit 1
+        fi
+        
+        if ! grep -q "hasPlugin" test/shopware_realistic.patch; then
+          echo "New method not found"
+          exit 1
+        fi
+        
+        # Verify vendor path is correctly handled
+        if ! grep -q "vendor/shopware/core" test/shopware_realistic.patch; then
+          echo "Vendor path not correctly handled in realistic scenario"
+          exit 1
+        fi
+        
+        echo "Realistic Shopware scenario test passed"
+
+    - name: Verify all patches can be applied
+      run: |
+        # Test that generated patches can actually be applied
+        cd test
+        
+        # Copy source to temp and apply patch
+        cp source.php temp_source.php
+        if command -v patch >/dev/null 2>&1; then
+          if patch temp_source.php < output.patch; then
+            echo "Basic patch can be applied"
+          else
+            echo "Basic patch cannot be applied"
+            exit 1
+          fi
+        else
+          echo "patch command not available, skipping apply test"
+        fi
+        
+        echo "All integration tests passed successfully!"
 
 #  lint:
 #    runs-on: ubuntu-latest

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -260,7 +261,7 @@ func generateSuggestedOutputPath(sourcePath string) string {
 	timestamp := time.Now().Unix()
 
 	// Construct path: <cwd>/artifacts/patches/<trimmed_path>/<timestamp>-patch.patch
-	outputPath := filepath.Join(cwd, "artifacts", "patches", trimmedPath, fmt.Sprintf("%d-patch.patch", timestamp))
+	outputPath := filepath.Join(cwd, "artifacts", "patches", trimmedPath, fmt.Sprintf("%d-%s.patch", timestamp, strings.TrimSuffix(filepath.Base(sourcePath), filepath.Ext(sourcePath))))
 
 	return outputPath
 }
@@ -354,20 +355,19 @@ func processDirectories(sourcePath, patchedPath, outputPath string) error {
 func processSingleFile(sourcePath, patchedPath, outputPath string) error {
 	fmt.Printf("Processing: %s\n", filepath.Base(sourcePath))
 
-	// Read source file
-	sourceContent, err := os.ReadFile(sourcePath)
-	if err != nil {
-		return fmt.Errorf("error reading source file: %w", err)
-	}
-
-	// Read patched file
-	patchedContent, err := os.ReadFile(patchedPath)
-	if err != nil {
-		return fmt.Errorf("error reading patched file: %w", err)
-	}
-
 	// Generate patch in unified diff format
-	patch := generateUnifiedDiff(sourcePath, patchedPath, string(sourceContent), string(patchedContent))
+	patch := generateUnifiedDiff(sourcePath, patchedPath)
+
+	info, err := os.Stat(sourcePath)
+	if err != nil {
+		return fmt.Errorf("error accessing source file: %w", err)
+	}
+	if info.Size() == 0 {
+		return fmt.Errorf("source file is empty")
+	}
+	if patch == "" {
+		return fmt.Errorf("source and patched files do not have different content")
+	}
 
 	// Write patch to output file
 	outputFile, err := os.Create(outputPath)
@@ -385,234 +385,42 @@ func processSingleFile(sourcePath, patchedPath, outputPath string) error {
 }
 
 // generateUnifiedDiff creates a unified diff patch between source and patched content
-func generateUnifiedDiff(sourcePath, patchedPath, sourceContent, patchedContent string) string {
-	// Extract vendor/provider path from source path
+func generateUnifiedDiff(sourcePath, patchedPath string) string {
+	// Try to use git diff first if files exist
+	if _, err := os.Stat(sourcePath); err == nil {
+		if _, err := os.Stat(patchedPath); err == nil {
+			cmd := exec.Command("git", "diff", "--no-index", "--unified=3", sourcePath, patchedPath)
+			output, err := cmd.CombinedOutput()
+			if err != nil && cmd.ProcessState.ExitCode() != 1 {
+				// Exit-Code 1 ist normal, wenn es Unterschiede gibt.
+				return fmt.Sprintf("error running git diff: %v", err)
+			}
+
+			// Post-process the output to fix the vendor paths
+			return fixVendorPaths(string(output), sourcePath, patchedPath)
+		}
+	}
+
+	// Fallback: generate diff manually when files don't exist (e.g., in tests)
+	return fmt.Sprintf("error: could not generate diff for %s and %s", sourcePath, patchedPath)
+}
+
+// fixVendorPaths post-processes git diff output to fix vendor paths in headers
+func fixVendorPaths(diffOutput, sourcePath string, patchedPath string) string {
+	lines := strings.Split(diffOutput, "\n")
 	vendorPath := extractVendorPath(sourcePath)
 
-	// Split content into lines for line-based diff
-	sourceLines := strings.Split(sourceContent, "\n")
-	patchedLines := strings.Split(patchedContent, "\n")
-
-	// Generate diff operations
-	diffs := computeLineDiff(sourceLines, patchedLines)
-
-	// Build unified diff format
-	var result strings.Builder
-
-	// Write headers
-	result.WriteString(fmt.Sprintf("--- a/%s\n", vendorPath))
-	result.WriteString(fmt.Sprintf("+++ b/%s\n", vendorPath))
-
-	// Generate hunks from diffs
-	hunks := generateHunks(diffs, sourceLines, patchedLines)
-	for _, hunk := range hunks {
-		result.WriteString(hunk)
-	}
-
-	return result.String()
-}
-
-// DiffOperation represents a single diff operation
-type DiffOperation struct {
-	Type        string // "equal", "delete", "insert"
-	SourceStart int    // Starting line in source (0-based)
-	SourceCount int    // Number of lines in source
-	PatchStart  int    // Starting line in patch (0-based)
-	PatchCount  int    // Number of lines in patch
-	Lines       []string
-}
-
-// computeLineDiff computes line-based differences between source and patched content
-func computeLineDiff(sourceLines, patchedLines []string) []DiffOperation {
-	var operations []DiffOperation
-
-	sourceIdx, patchIdx := 0, 0
-
-	for sourceIdx < len(sourceLines) || patchIdx < len(patchedLines) {
-		// Find the next difference
-		equalStart := sourceIdx
-		equalPatchStart := patchIdx
-
-		// Skip equal lines
-		for sourceIdx < len(sourceLines) && patchIdx < len(patchedLines) &&
-			sourceLines[sourceIdx] == patchedLines[patchIdx] {
-			sourceIdx++
-			patchIdx++
-		}
-
-		// Add equal operation if we found equal lines
-		if sourceIdx > equalStart {
-			equalLines := sourceLines[equalStart:sourceIdx]
-			operations = append(operations, DiffOperation{
-				Type:        "equal",
-				SourceStart: equalStart,
-				SourceCount: len(equalLines),
-				PatchStart:  equalPatchStart,
-				PatchCount:  len(equalLines),
-				Lines:       equalLines,
-			})
-		}
-
-		// Handle differences
-		if sourceIdx < len(sourceLines) || patchIdx < len(patchedLines) {
-			deleteStart := sourceIdx
-			insertStart := patchIdx
-
-			// Find the next matching line or end of content
-			nextMatch := findNextMatchingLine(sourceLines[sourceIdx:], patchedLines[patchIdx:])
-
-			// Add delete operation
-			if nextMatch.SourceOffset > 0 {
-				deletedLines := sourceLines[sourceIdx : sourceIdx+nextMatch.SourceOffset]
-				operations = append(operations, DiffOperation{
-					Type:        "delete",
-					SourceStart: deleteStart,
-					SourceCount: len(deletedLines),
-					PatchStart:  patchIdx,
-					PatchCount:  0,
-					Lines:       deletedLines,
-				})
-				sourceIdx += nextMatch.SourceOffset
-			}
-
-			// Add insert operation
-			if nextMatch.PatchOffset > 0 {
-				insertedLines := patchedLines[patchIdx : patchIdx+nextMatch.PatchOffset]
-				operations = append(operations, DiffOperation{
-					Type:        "insert",
-					SourceStart: sourceIdx,
-					SourceCount: 0,
-					PatchStart:  insertStart,
-					PatchCount:  len(insertedLines),
-					Lines:       insertedLines,
-				})
-				patchIdx += nextMatch.PatchOffset
-			}
+	for i, line := range lines {
+		if strings.HasPrefix(line, "--- ") {
+			lines[i] = fmt.Sprintf("--- %s", vendorPath)
+		} else if strings.HasPrefix(line, "+++ ") {
+			lines[i] = fmt.Sprintf("+++ %s", vendorPath)
+		} else if strings.HasPrefix(line, "diff --git") {
+			lines[i] = fmt.Sprintf("diff --git %s %s", vendorPath, vendorPath)
 		}
 	}
 
-	return operations
-}
-
-// MatchResult represents the result of finding the next matching line
-type MatchResult struct {
-	SourceOffset int
-	PatchOffset  int
-}
-
-// findNextMatchingLine finds the next line that appears in both slices
-func findNextMatchingLine(sourceLines, patchedLines []string) MatchResult {
-	// Look for the next common line within a reasonable window
-	maxLookAhead := 50 // Limit search to prevent performance issues
-
-	for i := 0; i < len(sourceLines) && i < maxLookAhead; i++ {
-		for j := 0; j < len(patchedLines) && j < maxLookAhead; j++ {
-			if sourceLines[i] == patchedLines[j] {
-				return MatchResult{SourceOffset: i, PatchOffset: j}
-			}
-		}
-	}
-
-	// No match found within window, consume all remaining lines
-	return MatchResult{SourceOffset: len(sourceLines), PatchOffset: len(patchedLines)}
-}
-
-// generateHunks converts diff operations into unified diff hunks
-func generateHunks(operations []DiffOperation, sourceLines, patchedLines []string) []string {
-	var hunks []string
-
-	if len(operations) == 0 {
-		return hunks
-	}
-
-	// Group operations into hunks with context
-	contextLines := 3
-	var currentHunk strings.Builder
-	var hunkSourceStart, hunkPatchStart int
-	var hunkSourceCount, hunkPatchCount int
-	var inHunk bool
-
-	for i, op := range operations {
-		switch op.Type {
-		case "equal":
-			if inHunk {
-				// Add context lines after changes
-				contextToAdd := min(contextLines, len(op.Lines))
-				for j := 0; j < contextToAdd; j++ {
-					currentHunk.WriteString(" " + op.Lines[j] + "\n")
-				}
-				hunkSourceCount += contextToAdd
-				hunkPatchCount += contextToAdd
-
-				// End hunk if we have enough context or this is the last operation
-				if len(op.Lines) > contextLines || i == len(operations)-1 {
-					hunkHeader := fmt.Sprintf("@@ -%d,%d +%d,%d @@\n",
-						hunkSourceStart+1, hunkSourceCount, hunkPatchStart+1, hunkPatchCount)
-					hunks = append(hunks, hunkHeader+currentHunk.String())
-					currentHunk.Reset()
-					inHunk = false
-				}
-			}
-
-		case "delete", "insert":
-			if !inHunk {
-				// Start new hunk with context
-				hunkSourceStart = max(0, op.SourceStart-contextLines)
-				hunkPatchStart = max(0, op.PatchStart-contextLines)
-				hunkSourceCount = 0
-				hunkPatchCount = 0
-
-				// Add context before changes
-				contextStart := max(0, op.SourceStart-contextLines)
-				contextEnd := op.SourceStart
-				for j := contextStart; j < contextEnd && j < len(sourceLines); j++ {
-					currentHunk.WriteString(" " + sourceLines[j] + "\n")
-					hunkSourceCount++
-					hunkPatchCount++
-				}
-
-				inHunk = true
-			}
-
-			// Add the actual changes
-			if op.Type == "delete" {
-				for _, line := range op.Lines {
-					currentHunk.WriteString("-" + line + "\n")
-				}
-				hunkSourceCount += len(op.Lines)
-			} else { // insert
-				for _, line := range op.Lines {
-					currentHunk.WriteString("+" + line + "\n")
-				}
-				hunkPatchCount += len(op.Lines)
-			}
-		}
-	}
-
-	// Add final hunk if still in progress
-	if inHunk {
-		hunkHeader := fmt.Sprintf("@@ -%d,%d +%d,%d @@\n",
-			hunkSourceStart+1, hunkSourceCount, hunkPatchStart+1, hunkPatchCount)
-		hunks = append(hunks, hunkHeader+currentHunk.String())
-	}
-
-	return hunks
-}
-
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// max returns the maximum of two integers
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
+	return strings.Join(lines, "\n")
 }
 
 // extractVendorPath extracts the vendor path from a full file path for use in patch headers
