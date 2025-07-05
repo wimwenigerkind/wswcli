@@ -6,6 +6,11 @@ go install github.com/wimwenigerkind/wswcli@latest
 ```
 
 ### Using Homebrew (macOS/Linux)
+
+```bash
+brew install wimwenigerkind/tap/wswcli
+```
+or
 ```bash
 brew tap wimwenigerkind/homebrew-tap
 brew install wswcli
