@@ -4,7 +4,7 @@
 
 ### Überblick
 
-Der `patchvendor` Command erstellt unified diff Patches für Shopware Vendor-Modifikationen. Das Tool ist speziell für die Arbeit mit Shopware-Projekten entwickelt und generiert Patches mit korrekten `a/` und `b/` Pfaden basierend auf der Vendor/Provider-Struktur.
+Der `patchvendor` Command erstellt unified diff Patches für Shopware Vendor-Modifikationen. Das Tool ist speziell für die Arbeit mit Shopware-Projekten entwickelt und generiert Patches mit korrekten Vendor-Pfaden für eine saubere Integration in Entwicklungsworkflows.
 
 ### Verwendung
 
@@ -15,7 +15,7 @@ wswcli patchvendor [SOURCE] [PATCHED] [OUTPUT]
 #### Parameter
 
 - **SOURCE**: Pfad zur originalen, unmodifizierten Vendor-Datei oder -Verzeichnis
-- **PATCHED**: Pfad zur modifizierten Version mit Ihren Änderungen
+- **PATCHED**: Pfad zur modifizierten Version mit Ihren Änderungen  
 - **OUTPUT**: Pfad, wo die generierte Patch-Datei gespeichert werden soll
 
 #### Modi
@@ -152,6 +152,26 @@ Das Tool führt umfangreiche Validierungen durch:
 - **Dateierweiterungen**: Warnt vor unterschiedlichen Dateierweiterungen
 - **Pfad-Konflikte**: Verhindert identische SOURCE und PATCHED Pfade
 - **Output-Validierung**: Überprüft Output-Pfad auf Konflikte
+- **Identische Dateien**: Erkennt wenn Source und Patched identisch sind
+- **Leere Dateien**: Verhindert Verarbeitung leerer Source-Dateien
+- **Existierende Verzeichnisse**: Warnt vor Output-Pfaden die bereits als Verzeichnis existieren
+
+#### Neue Validierungen (v2.0.0)
+```bash
+# Beispiele für erweiterte Fehlerbehandlung:
+
+# Identische Dateien werden erkannt
+$ wswcli patchvendor file1.php file1.php output.patch
+Error: source and patched files do not have different content
+
+# Leere Dateien werden abgelehnt  
+$ wswcli patchvendor empty.php modified.php output.patch
+Error: source file is empty
+
+# Existierende Verzeichnisse als Output werden verhindert
+$ wswcli patchvendor source.php patched.php existing_directory/
+Error: output path exists and is a directory: existing_directory/
+```
 
 ### Tipps
 
@@ -225,17 +245,6 @@ When you omit the OUTPUT parameter, the tool automatically generates a structure
 **Example:**
 - **Input:** `vendor/shopware/core/Framework/Plugin/PluginManager.php`
 - **Suggestion:** `./artifacts/patches/shopware/core/1704369600-patch.patch`
-
-### Supported File Types
-
-The tool supports all common file types in Shopware projects:
-- **PHP**: `.php`
-- **JavaScript**: `.js`, `.ts`, `.jsx`, `.tsx`
-- **Styling**: `.css`, `.scss`, `.sass`, `.less`
-- **Templates**: `.html`, `.twig`
-- **Configuration**: `.xml`, `.json`, `.yml`, `.yaml`
-- **Documentation**: `.md`, `.txt`
-- **Others**: `.sql`, `.sh`, `.vue`
 
 ### Examples
 
