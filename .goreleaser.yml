@@ -1,3 +1,5 @@
+version: 2
+
 project_name: wswcli
 
 before:
@@ -46,6 +48,58 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+dockers:
+  - image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:latest"
+      - "ghcr.io/wimwenigerkind/wswcli:{{ .Tag }}"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}.{{ .Minor }}"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+    goos: linux
+    goarch: amd64
+  - image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:latest-arm64"
+      - "ghcr.io/wimwenigerkind/wswcli:{{ .Tag }}-arm64"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}-arm64"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}.{{ .Minor }}-arm64"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goos: linux
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/wimwenigerkind/wswcli:latest"
+    image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:latest"
+      - "ghcr.io/wimwenigerkind/wswcli:latest-arm64"
+  - name_template: "ghcr.io/wimwenigerkind/wswcli:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:{{ .Tag }}"
+      - "ghcr.io/wimwenigerkind/wswcli:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}"
+    image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}-arm64"
+  - name_template: "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}.{{ .Minor }}"
+    image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/wimwenigerkind/wswcli:v{{ .Major }}.{{ .Minor }}-arm64"
 
 brews:
   - name: wswcli
