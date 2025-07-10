@@ -1,0 +1,102 @@
+version: 2
+
+project_name: wswcli
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.version=nightly-{{.Date}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_nightly_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "nightly-{{ .Date }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+dockers:
+  - image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:nightly"
+      - "ghcr.io/wimwenigerkind/wswcli:nightly-amd64"
+      - "ghcr.io/wimwenigerkind/wswcli:nightly-{{ .Date }}"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version=nightly-{{.Date}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+    goos: linux
+    goarch: amd64
+  - image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:nightly-arm64"
+      - "ghcr.io/wimwenigerkind/wswcli:nightly-{{ .Date }}-arm64"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version=nightly-{{.Date}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goos: linux
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/wimwenigerkind/wswcli:nightly"
+    image_templates:
+      - "ghcr.io/wimwenigerkind/wswcli:nightly"
+      - "ghcr.io/wimwenigerkind/wswcli:nightly-arm64"
+
+release:
+  prerelease: true
+  name_template: "Nightly Release ({{ .Date }})"
+  header: |
+    🌙 **Nightly Build - {{ .Date }}**
+    
+    This is an automated nightly release containing the latest changes from the main branch.
+  footer: |
+    **⚠️ Warning**: Nightly builds are experimental and may contain bugs or incomplete features.
+    
+    For stable releases, please use the [latest release](https://github.com/wimwenigerkind/wswcli/releases/latest).
+
+# Skip homebrew for nightly builds
+brews: []
