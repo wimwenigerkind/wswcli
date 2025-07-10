@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-07-10
+
 ### Added
 - Docker support with multi-architecture images (AMD64, ARM64)
 - Multi-platform Docker manifests for automatic platform selection
@@ -15,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved documentation structure and content
+- Updated GitHub Actions workflow to use GoReleaser v2 (goreleaser-action@v6)
+
+### Fixed
+- GitHub Actions release workflow compatibility with GoReleaser configuration version 2
+- Added missing `packages: write` permission for Docker image publishing to GitHub Container Registry
+- Docker authentication issue preventing image publishing to GitHub Container Registry
 
 ## [2.0.0] - 2025-07-05
 
