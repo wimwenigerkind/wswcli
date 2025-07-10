@@ -391,27 +391,48 @@ func generateJUnitXML(duplicates []DuplicateGroup, allFiles []string) string {
 	// Generate test cases for all files
 	for _, file := range allFiles {
 		relPath, _ := filepath.Rel(projectPath, file)
-		testName := fmt.Sprintf("TwigBlocks.%s", strings.ReplaceAll(relPath, "/", "."))
+		testName := fmt.Sprintf("%s", relPath)
 
 		if fileStatus[file] {
 			// Failed test case
 			var failureDetails []string
+
+			// Get repository info for file links
+			repoOwner := os.Getenv("BITBUCKET_REPO_OWNER")
+			repoSlug := os.Getenv("BITBUCKET_REPO_SLUG")
+			commit := os.Getenv("BITBUCKET_COMMIT")
+
 			for _, group := range duplicates {
 				for _, block := range group.Files {
 					if block.File == file {
-						failureDetails = append(failureDetails,
-							fmt.Sprintf("Line %d: Duplicate block '%s' (appears %d times in this file)",
-								block.Line, group.BlockName, group.Count))
+						lineDetail := fmt.Sprintf("Line %d: Duplicate block '%s' (appears %d times in this file)",
+							block.Line, group.BlockName, group.Count)
+
+						// Add file link if we have repository info
+						if repoOwner != "" && repoSlug != "" && commit != "" {
+							fileLink := fmt.Sprintf("https://bitbucket.org/%s/%s/src/%s/%s#lines-%d",
+								repoOwner, repoSlug, commit, relPath, block.Line)
+							lineDetail += fmt.Sprintf("\n    📁 View file: %s", fileLink)
+						}
+
+						failureDetails = append(failureDetails, lineDetail)
 					}
 				}
 			}
 
+			// Generate main file link
+			var mainFileLink string
+			if repoOwner != "" && repoSlug != "" && commit != "" {
+				mainFileLink = fmt.Sprintf("\n\nView file: https://bitbucket.org/%s/%s/src/%s/%s",
+					repoOwner, repoSlug, commit, relPath)
+			}
+
 			xml += fmt.Sprintf(`  <testcase classname="TwigBlocks" name="%s" time="0">
     <failure message="Duplicate Twig blocks found" type="DuplicateBlockError">
-%s
+%s%s
     </failure>
   </testcase>
-`, testName, strings.Join(failureDetails, "\n"))
+`, testName, strings.Join(failureDetails, "\n"), mainFileLink)
 		} else {
 			// Passed test case
 			xml += fmt.Sprintf(`  <testcase classname="TwigBlocks" name="%s" time="0"/>
