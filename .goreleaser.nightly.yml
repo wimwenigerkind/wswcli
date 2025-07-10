@@ -21,7 +21,7 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X main.version=nightly-{{.Date}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+      - -s -w -X main.version=nightly -X main.commit={{.Commit}} -X main.date={{.Date}}
 
 archives:
   - format: tar.gz
@@ -53,28 +53,26 @@ dockers:
   - image_templates:
       - "ghcr.io/wimwenigerkind/wswcli:nightly"
       - "ghcr.io/wimwenigerkind/wswcli:nightly-amd64"
-      - "ghcr.io/wimwenigerkind/wswcli:nightly-{{ .Date }}"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly-{{.Date}}"
+      - "--label=org.opencontainers.image.version=nightly"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--platform=linux/amd64"
     goos: linux
     goarch: amd64
   - image_templates:
       - "ghcr.io/wimwenigerkind/wswcli:nightly-arm64"
-      - "ghcr.io/wimwenigerkind/wswcli:nightly-{{ .Date }}-arm64"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly-{{.Date}}"
+      - "--label=org.opencontainers.image.version=nightly"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--platform=linux/arm64"
     goos: linux
