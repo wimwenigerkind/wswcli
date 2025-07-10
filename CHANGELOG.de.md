@@ -13,6 +13,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Manuelle Auslösung für Nightly-Releases über GitHub Actions
 - Intelligente Nightly-Release-Logik (erstellt nur Release bei neuen Commits)
 - Separate GoReleaser-Konfiguration für Nightly-Builds
+- **TwigBlocks-Befehl** zum Finden von duplizierten Twig-Blöcken in Shopware/Symfony-Projekten
+- Rekursives Scannen von `*.html.twig` Dateien mit intelligenter Verzeichnisfilterung
+- Mehrere Ausgabeformate: Standard, JSON und Bitbucket Pipes Format
+- CI/CD-Integration mit korrekten Exit-Codes für Automatisierung
+- Umfassende Testsuite für TwigBlocks-Funktionalität
 
 ## [2.1.0] - 2025-07-10
 

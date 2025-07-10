@@ -48,6 +48,33 @@ wswcli patchvendor vendor/shopware/core custom/patches patches/
 
 For detailed documentation, see [docs/patchvendor.md](docs/patchvendor.md).
 
+### TwigBlocks Command
+
+Find duplicate Twig blocks in Shopware/Symfony projects to prevent template conflicts:
+
+```bash
+# Scan current directory
+wswcli twigblocks .
+
+# Scan specific project
+wswcli twigblocks /path/to/project
+
+# Generate JSON report
+wswcli twigblocks . --output report.json
+
+# CI/CD integration with Bitbucket format
+wswcli twigblocks . --bitbucket
+```
+
+#### Features
+- **Recursive scanning**: Finds all `*.html.twig` files in project directories
+- **Duplicate detection**: Identifies blocks with same name/content across files
+- **CI/CD ready**: Exit codes and multiple output formats for automation
+- **Bitbucket integration**: Native support for Bitbucket Pipes reporting
+- **Smart filtering**: Automatically ignores common build/cache directories
+
+For detailed documentation, see [docs/twigblocks.md](docs/twigblocks.md).
+
 ## Development
 
 ### Prerequisites
