@@ -76,21 +76,51 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create nightly tag
-        run: |
-          NIGHTLY_TAG="nightly-$(date +'%Y%m%d')"
-          git tag nightly-latest
-          git tag $NIGHTLY_TAG
-          git push origin nightly-latest
-          git push origin $NIGHTLY_TAG
-          echo "NIGHTLY_TAG=$NIGHTLY_TAG" >> $GITHUB_ENV
-
-      - name: Run GoReleaser for Nightly
+      - name: Run GoReleaser for Nightly (Snapshot)
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --config .goreleaser.nightly.yml --clean
+          args: release --config .goreleaser.nightly.yml --clean --snapshot
+
+      - name: Create nightly release manually
+        run: |
+          NIGHTLY_TAG="nightly-$(date +'%Y%m%d')"
+          
+          # Create and push tags
+          git tag nightly-latest || true
+          git tag $NIGHTLY_TAG || true
+          git push origin nightly-latest || true
+          git push origin $NIGHTLY_TAG || true
+          
+          # Create GitHub release
+          gh release create nightly-latest \
+            --title "Nightly Release ($(date +'%Y-%m-%d'))" \
+            --notes "🌙 **Nightly Build - $(date +'%Y-%m-%d')**
+
+          This is an automated nightly release containing the latest changes from the main branch.
+          
+          **⚠️ Warning**: Nightly builds are experimental and may contain bugs or incomplete features.
+          
+          **🐳 Docker Images:**
+          - \`ghcr.io/wimwenigerkind/wswcli:nightly\`
+          - \`ghcr.io/wimwenigerkind/wswcli:nightly-amd64\`
+          - \`ghcr.io/wimwenigerkind/wswcli:nightly-arm64\`
+          
+          **📦 Installation:**
+          \`\`\`bash
+          # Docker
+          docker run --rm ghcr.io/wimwenigerkind/wswcli:nightly --version
+          \`\`\`
+          
+          **🔗 Links:**
+          - [Latest Stable Release](https://github.com/wimwenigerkind/wswcli/releases/latest)
+          - [Documentation](https://github.com/wimwenigerkind/wswcli#readme)
+          
+          ---
+          *Built from commit: $(git rev-parse HEAD)*" \
+            --prerelease \
+            dist/*.tar.gz dist/*.zip dist/checksums.txt || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
