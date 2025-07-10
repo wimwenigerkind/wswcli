@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Docker support with multi-architecture images (AMD64, ARM64)
+- Multi-platform Docker manifests for automatic platform selection
+- Enhanced Dockerfile with security improvements (non-root user, CA certificates)
+- GoReleaser configuration updated to version 2
+
+### Changed
+- Improved documentation structure and content
+
 ## [2.0.0] - 2025-07-05
 
 ### Added
