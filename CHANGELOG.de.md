@@ -7,6 +7,13 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt
+- Nightly-Release-Pipeline mit automatischen täglichen Builds
+- Nightly-Docker-Images mit `nightly`, `nightly-amd64`, `nightly-arm64` Tags
+- Manuelle Auslösung für Nightly-Releases über GitHub Actions
+- Intelligente Nightly-Release-Logik (erstellt nur Release bei neuen Commits)
+- Separate GoReleaser-Konfiguration für Nightly-Builds
+
 ## [2.1.0] - 2025-07-10
 
 ### Hinzugefügt

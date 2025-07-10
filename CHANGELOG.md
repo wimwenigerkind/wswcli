@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Nightly release pipeline with automated daily builds
+- Nightly Docker images with `nightly`, `nightly-amd64`, `nightly-arm64` tags
+- Manual trigger support for nightly releases via GitHub Actions
+- Smart nightly release logic (only releases when there are new commits)
+- Separate GoReleaser configuration for nightly builds
+
 ## [2.1.0] - 2025-07-10
 
 ### Added
