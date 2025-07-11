@@ -7,17 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-07-10
+
 ### Added
+- **TwigBlocks command** for finding duplicate Twig blocks in Shopware/Symfony projects
+- Recursive scanning of `*.html.twig` files with smart directory filtering
+- Detection of duplicate block definitions within the same file (prevents template conflicts)
+- Multiple output formats: human-readable, JSON, and JUnit XML for CI/CD
+- Bitbucket Code Insights integration with Reports API and annotations
+- File links in test reports for easy navigation to problematic files
+- Smart directory filtering (ignores `node_modules`, `vendor`, `cache`, etc.)
+- CI/CD integration with proper exit codes for automation
+- Comprehensive test suite for TwigBlocks functionality
+- Support for both relative (`.`) and absolute path scanning
 - Nightly release pipeline with automated daily builds
 - Nightly Docker images with `nightly`, `nightly-amd64`, `nightly-arm64` tags
 - Manual trigger support for nightly releases via GitHub Actions
 - Smart nightly release logic (only releases when there are new commits)
 - Separate GoReleaser configuration for nightly builds
-- **TwigBlocks command** for finding duplicate Twig blocks in Shopware/Symfony projects
-- Recursive scanning of `*.html.twig` files with smart directory filtering
-- Multiple output formats: standard, JSON, and Bitbucket Pipes format
-- CI/CD integration with proper exit codes for automation
-- Comprehensive test suite for TwigBlocks functionality
+
+### Changed
+- Improved directory scanning logic to properly handle root directory (`.`) paths
+- Enhanced JUnit XML output with clickable file links for Bitbucket integration
+
+### Fixed
+- Fixed issue where scanning with relative path (`.`) would not find any files
+- Resolved Docker authentication for GitHub Container Registry in CI/CD
+- Fixed GoReleaser configuration compatibility with version 2
 
 ## [2.1.0] - 2025-07-10
 

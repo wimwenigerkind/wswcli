@@ -7,17 +7,33 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unveröffentlicht]
 
+## [2.2.0] - 2025-07-10
+
 ### Hinzugefügt
+- **TwigBlocks-Befehl** zum Finden von duplizierten Twig-Blöcken in Shopware/Symfony-Projekten
+- Rekursives Scannen von `*.html.twig` Dateien mit intelligenter Verzeichnisfilterung
+- Erkennung von doppelten Block-Definitionen innerhalb derselben Datei (verhindert Template-Konflikte)
+- Mehrere Ausgabeformate: Menschenlesbar, JSON und JUnit XML für CI/CD
+- Bitbucket Code Insights Integration mit Reports API und Annotationen
+- Datei-Links in Test-Reports für einfache Navigation zu problematischen Dateien
+- Intelligente Verzeichnisfilterung (ignoriert `node_modules`, `vendor`, `cache`, etc.)
+- CI/CD-Integration mit korrekten Exit-Codes für Automatisierung
+- Umfassende Testsuite für TwigBlocks-Funktionalität
+- Unterstützung für relative (`.`) und absolute Pfad-Scans
 - Nightly-Release-Pipeline mit automatischen täglichen Builds
 - Nightly-Docker-Images mit `nightly`, `nightly-amd64`, `nightly-arm64` Tags
 - Manuelle Auslösung für Nightly-Releases über GitHub Actions
 - Intelligente Nightly-Release-Logik (erstellt nur Release bei neuen Commits)
 - Separate GoReleaser-Konfiguration für Nightly-Builds
-- **TwigBlocks-Befehl** zum Finden von duplizierten Twig-Blöcken in Shopware/Symfony-Projekten
-- Rekursives Scannen von `*.html.twig` Dateien mit intelligenter Verzeichnisfilterung
-- Mehrere Ausgabeformate: Standard, JSON und Bitbucket Pipes Format
-- CI/CD-Integration mit korrekten Exit-Codes für Automatisierung
-- Umfassende Testsuite für TwigBlocks-Funktionalität
+
+### Geändert
+- Verbesserte Verzeichnis-Scan-Logik für korrekte Behandlung von Root-Verzeichnis (`.`) Pfaden
+- Erweiterte JUnit XML Ausgabe mit klickbaren Datei-Links für Bitbucket-Integration
+
+### Behoben
+- Problem behoben, bei dem Scannen mit relativem Pfad (`.`) keine Dateien fand
+- Docker-Authentifizierung für GitHub Container Registry in CI/CD behoben
+- GoReleaser-Konfiguration Kompatibilität mit Version 2 behoben
 
 ## [2.1.0] - 2025-07-10
 
