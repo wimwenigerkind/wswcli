@@ -433,7 +433,7 @@ func generateUnifiedDiff(sourcePath, patchedPath string) string {
 // fixVendorPaths post-processes git diff output to fix vendor paths in headers
 func fixVendorPaths(diffOutput, sourcePath string, patchedPath string) string {
 	lines := strings.Split(diffOutput, "\n")
-	vendorPath := extractVendorPath(patchedPath)
+	vendorPath := extractVendorPath(sourcePath)
 
 	for i, line := range lines {
 		if strings.HasPrefix(line, "--- ") {

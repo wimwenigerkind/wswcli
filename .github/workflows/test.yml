@@ -128,9 +128,24 @@ jobs:
           exit 1
         fi
         
-        # Check for proper vendor path in diff headers
-        if ! grep -q "vendor/shopware/core" test/vendor_output.patch; then
+        # Check for proper vendor path in diff headers (should show relative path)
+        if ! grep -q "Framework/Plugin/PluginManager.php" test/vendor_output.patch; then
           echo "Vendor path was not properly handled in patch headers"
+          echo "Patch content:"
+          cat test/vendor_output.patch
+          exit 1
+        fi
+        
+        # Check that it uses a/ and b/ prefixes with more robust pattern matching
+        if ! grep -E "^--- a/Framework/Plugin/PluginManager\.php" test/vendor_output.patch; then
+          echo "Patch does not use correct a/ prefix format"
+          echo "Patch content:"
+          cat test/vendor_output.patch
+          exit 1
+        fi
+        
+        if ! grep -E "^\+\+\+ b/Framework/Plugin/PluginManager\.php" test/vendor_output.patch; then
+          echo "Patch does not use correct b/ prefix format"
           echo "Patch content:"
           cat test/vendor_output.patch
           exit 1
@@ -434,9 +449,15 @@ jobs:
           exit 1
         fi
         
-        # Verify vendor path is correctly handled
-        if ! grep -q "vendor/shopware/core" test/shopware_realistic.patch; then
+        # Verify vendor path is correctly handled (should show relative path)
+        if ! grep -q "Framework/Plugin/PluginManager.php" test/shopware_realistic.patch; then
           echo "Vendor path not correctly handled in realistic scenario"
+          exit 1
+        fi
+        
+        # Check that it uses a/ and b/ prefixes with more robust pattern matching
+        if ! grep -E "^--- a/Framework/Plugin/PluginManager\.php" test/shopware_realistic.patch; then
+          echo "Realistic patch does not use correct a/ prefix format"
           exit 1
         fi
         
