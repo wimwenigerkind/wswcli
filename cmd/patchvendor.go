@@ -16,25 +16,49 @@ var patchvendorCmd = &cobra.Command{
 	Use:   "patchvendor [SOURCE] [PATCHED] [OUTPUT]",
 	Short: "Generate patches for Shopware vendor modifications",
 	Long: `Generate unified diff patches for Shopware vendor modifications with proper a/b paths from vendor/provider structure.
+
+Configuration:
+  Create a .wswcli file in your project root to configure default paths:
+  [patchvendor]
+  patch_output_dir = "artifacts/patches"
 	
 Examples:
   wswcli patchvendor /path/to/source /path/to/patched /path/to/output
-  wswcli patchvendor  # Interactive mode with prompts`,
+  wswcli patchvendor  # Interactive mode with prompts
+  wswcli patchvendor --init-config  # Create example .wswcli file`,
 	Args: cobra.RangeArgs(0, 3),
 	RunE: runPatchVendor,
 }
 
 func init() {
+	patchvendorCmd.Flags().Bool("init-config", false, "Create example .wswcli configuration file")
 	rootCmd.AddCommand(patchvendorCmd)
 }
 
 func runPatchVendor(cmd *cobra.Command, args []string) error {
+	// Check if --init-config flag is set
+	initConfig, _ := cmd.Flags().GetBool("init-config")
+	if initConfig {
+		if err := CreateExampleConfig(); err != nil {
+			return fmt.Errorf("error creating config file: %w", err)
+		}
+		fmt.Println("Created example .wswcli configuration file")
+		fmt.Println("Edit the file to customize paths for your project")
+		return nil
+	}
+
 	var sourcePath, patchedPath, outputPath string
 	var err error
 
+	// Load configuration
+	config, err := LoadConfig()
+	if err != nil {
+		return fmt.Errorf("error loading configuration: %w", err)
+	}
+
 	// If not all arguments provided, use interactive mode
 	if len(args) < 3 {
-		sourcePath, patchedPath, outputPath, err = getPathsInteractively(args)
+		sourcePath, patchedPath, outputPath, err = getPathsInteractively(args, config)
 		if err != nil {
 			return err
 		}
@@ -146,7 +170,7 @@ func validateFileExtensions(sourcePath, patchedPath string) error {
 	return nil
 }
 
-func getPathsInteractively(args []string) (string, string, string, error) {
+func getPathsInteractively(args []string, config *Config) (string, string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("\n=== Shopware Vendor Patch Generator ===")
@@ -195,15 +219,15 @@ func getPathsInteractively(args []string) (string, string, string, error) {
 		outputPath = args[2]
 		fmt.Printf("Using provided OUTPUT path: %s\n", outputPath)
 	} else {
-		// Generate suggested output path
-		suggestedPath := generateSuggestedOutputPath(sourcePath)
+		// Generate suggested output path using configuration
+		suggestedPath := config.GetConfiguredOutputPath(patchedPath)
 
 		fmt.Println()
 		fmt.Println("OUTPUT PATH:")
 		fmt.Println("   This is where the generated patch file will be saved.")
 		fmt.Println("   The patch can later be applied using 'git apply' or 'patch' command.")
-		fmt.Printf("   Suggested: %s\n", suggestedPath)
-		fmt.Print("   Enter output path (or press Enter for suggested): ")
+		fmt.Printf("   Suggested (from config): %s\n", suggestedPath)
+		fmt.Print("   Enter output path (or press Enter for configured path): ")
 		outputPath, err = reader.ReadString('\n')
 		if err != nil {
 			return "", "", "", fmt.Errorf("error reading output path: %w", err)
@@ -389,6 +413,7 @@ func generateUnifiedDiff(sourcePath, patchedPath string) string {
 	// Try to use git diff first if files exist
 	if _, err := os.Stat(sourcePath); err == nil {
 		if _, err := os.Stat(patchedPath); err == nil {
+			// Use git diff with source as first argument (a/) and patched as second (b/)
 			cmd := exec.Command("git", "diff", "--no-index", "--unified=3", sourcePath, patchedPath)
 			output, err := cmd.CombinedOutput()
 			if err != nil && cmd.ProcessState.ExitCode() != 1 {
@@ -408,15 +433,15 @@ func generateUnifiedDiff(sourcePath, patchedPath string) string {
 // fixVendorPaths post-processes git diff output to fix vendor paths in headers
 func fixVendorPaths(diffOutput, sourcePath string, patchedPath string) string {
 	lines := strings.Split(diffOutput, "\n")
-	vendorPath := extractVendorPath(sourcePath)
+	vendorPath := extractVendorPath(patchedPath)
 
 	for i, line := range lines {
 		if strings.HasPrefix(line, "--- ") {
-			lines[i] = fmt.Sprintf("--- %s", vendorPath)
+			lines[i] = fmt.Sprintf("--- a/%s", vendorPath)
 		} else if strings.HasPrefix(line, "+++ ") {
-			lines[i] = fmt.Sprintf("+++ %s", vendorPath)
+			lines[i] = fmt.Sprintf("+++ b/%s", vendorPath)
 		} else if strings.HasPrefix(line, "diff --git") {
-			lines[i] = fmt.Sprintf("diff --git %s %s", vendorPath, vendorPath)
+			lines[i] = fmt.Sprintf("diff --git a/%s b/%s", vendorPath, vendorPath)
 		}
 	}
 
@@ -429,12 +454,12 @@ func extractVendorPath(fullPath string) string {
 	normalizedPath := filepath.ToSlash(fullPath)
 	parts := strings.Split(normalizedPath, "/")
 
-	// Look for vendor directory and extract the full path from vendor onwards
+	// Look for vendor directory and extract the path after vendor/provider/package
 	for i, part := range parts {
-		if part == "vendor" && i+2 < len(parts) {
-			// Return the full path from vendor/ onwards
-			// e.g. vendor/shopware/core/Framework/Plugin/PluginManager.php
-			return strings.Join(parts[i:], "/")
+		if part == "vendor" && i+3 < len(parts) {
+			// Skip vendor/provider/package and return the rest
+			// e.g. vendor/shopware/storefront/Resources/views/... -> Resources/views/...
+			return strings.Join(parts[i+3:], "/")
 		}
 	}
 
