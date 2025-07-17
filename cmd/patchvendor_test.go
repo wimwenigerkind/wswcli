@@ -246,17 +246,17 @@ func TestExtractVendorPath(t *testing.T) {
 		{
 			name:     "Shopware core file",
 			input:    "vendor/shopware/core/Framework/Plugin/PluginManager.php",
-			expected: "vendor/shopware/core/Framework/Plugin/PluginManager.php",
+			expected: "Framework/Plugin/PluginManager.php",
 		},
 		{
 			name:     "Symfony component",
 			input:    "vendor/symfony/console/Command/Command.php",
-			expected: "vendor/symfony/console/Command/Command.php",
+			expected: "Command/Command.php",
 		},
 		{
 			name:     "Doctrine ORM",
 			input:    "vendor/doctrine/orm/lib/Doctrine/ORM/EntityManager.php",
-			expected: "vendor/doctrine/orm/lib/Doctrine/ORM/EntityManager.php",
+			expected: "lib/Doctrine/ORM/EntityManager.php",
 		},
 		{
 			name:     "Directory without vendor",
@@ -276,7 +276,7 @@ func TestExtractVendorPath(t *testing.T) {
 		{
 			name:     "Nested vendor path",
 			input:    "project/vendor/monolog/monolog/src/Monolog/Logger.php",
-			expected: "vendor/monolog/monolog/src/Monolog/Logger.php",
+			expected: "src/Monolog/Logger.php",
 		},
 	}
 
@@ -343,12 +343,12 @@ index 1234567..abcdefg 100644
  <?php
 +echo "new line";
  echo "test";`,
-			sourcePath:  "vendor/shopware/core/Test.php",
-			patchedPath: "vendor/shopware/core/Test.php",
+			sourcePath:  "vendor/shopware/core/src/Test.php",
+			patchedPath: "vendor/shopware/core/src/Test.php",
 			expectContains: []string{
-				"--- vendor/shopware/core/Test.php",
-				"+++ vendor/shopware/core/Test.php",
-				"diff --git vendor/shopware/core/Test.php vendor/shopware/core/Test.php",
+				"--- a/src/Test.php",
+				"+++ b/src/Test.php",
+				"diff --git a/src/Test.php b/src/Test.php",
 			},
 		},
 	}
