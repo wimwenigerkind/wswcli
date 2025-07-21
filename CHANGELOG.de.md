@@ -7,6 +7,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unveröffentlicht]
 
+## [v2.4.1] - 2025-07-21
+
+### Entfernt
+- Entferne das `media`-Replacement aus dem `bs-4-to-5`-Befehl, da es `media` ersetzt und andere Klassen beschädigt
+
 ## [v2.4.0] - 2025-07-21
 
 ### Hinzugefügt
