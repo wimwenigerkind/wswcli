@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2025-07-21
+
+### Added
+- **Bootstrap 4 to 5 Migration command** (`bs-4-to-5`) for automated migration of HTML and Twig templates
+
+## [2.3.0] - 2025-07-17
+
+### Added
+- Configuration support for the `patchvendor` command, enabling flexible patch generation and improved diff path handling
+
+### Changed
+
+- Enhanced vendor path validation in patch tests to ensure correct relative paths and proper `a/b` prefix formatting
+- Refactored patchvendor test cases for more accurate path expectations and robust validation
+
 ## [2.2.0] - 2025-07-10
 
 ### Added
