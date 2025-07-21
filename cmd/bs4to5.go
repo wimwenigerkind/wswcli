@@ -63,9 +63,9 @@ func runBS4to5Migration(cmd *cobra.Command, args []string) error {
 	}
 
 	if dryRun {
-		fmt.Printf("🔍 DRY RUN: Previewing Bootstrap 4 to 5 migration in: %s\n", projectPath)
+		fmt.Printf("DRY RUN: Previewing Bootstrap 4 to 5 migration in: %s\n", projectPath)
 	} else {
-		fmt.Printf("🚀 Migrating Bootstrap 4 to 5 in: %s\n", projectPath)
+		fmt.Printf("Migrating Bootstrap 4 to 5 in: %s\n", projectPath)
 	}
 
 	// Find all relevant files (always recursive)
@@ -89,20 +89,20 @@ func runBS4to5Migration(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		changes, err := processFile(file, migrations)
 		if err != nil {
-			fmt.Printf("❌ Error processing %s: %v\n", file, err)
+			fmt.Printf("Error processing %s: %v\n", file, err)
 			continue
 		}
 		totalChanges += changes
 		if changes > 0 {
-			fmt.Printf("✅ %s: %d changes\n", file, changes)
+			fmt.Printf("%s: %d changes\n", file, changes)
 		}
 	}
 
 	if dryRun {
-		fmt.Printf("\n🔍 DRY RUN COMPLETE: Would make %d changes across %d files\n", totalChanges, len(files))
+		fmt.Printf("\nDRY RUN COMPLETE: Would make %d changes across %d files\n", totalChanges, len(files))
 		fmt.Println("Run without --dry-run to apply changes")
 	} else {
-		fmt.Printf("\n✅ MIGRATION COMPLETE: Made %d changes across %d files\n", totalChanges, len(files))
+		fmt.Printf("\nMIGRATION COMPLETE: Made %d changes across %d files\n", totalChanges, len(files))
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func processFile(filename string, migrations []BootstrapMigration) (int, error) 
 				changeCount += len(matches)
 				modifiedContent = newContent
 				if dryRun {
-					fmt.Printf("  📝 %s: %s (%d matches)\n", migration.Name, migration.Description, len(matches))
+					fmt.Printf("  %s: %s (%d matches)\n", migration.Name, migration.Description, len(matches))
 				}
 			}
 		}

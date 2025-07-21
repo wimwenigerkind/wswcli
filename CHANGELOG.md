@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Removed emojis from `bs-4-to-5` command output for cleaner text output
+
 ## [v2.4.1] - 2025-07-21
 
 ### Removed
