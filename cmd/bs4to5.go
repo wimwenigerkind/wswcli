@@ -335,14 +335,6 @@ func getBootstrapMigrations() []BootstrapMigration {
 			Replacement: "table-dark",
 			Description: "thead-dark → table-dark",
 		},
-
-		// Removed Components (with warnings)
-		{
-			Name:        "Media Object",
-			Pattern:     regexp.MustCompile(`\bmedia\b`),
-			Replacement: "d-flex", // Basic replacement, may need more work
-			Description: "media → d-flex (media object component removed, manual adjustment needed)",
-		},
 		{
 			Name:        "Card Deck",
 			Pattern:     regexp.MustCompile(`card-deck`),
@@ -355,16 +347,12 @@ func getBootstrapMigrations() []BootstrapMigration {
 			Replacement: "row row-cols-1 row-cols-md-2 row-cols-xl-3",
 			Description: "card-columns → row row-cols-* (card-columns removed, use grid)",
 		},
-
-		// Form Group (often used with custom forms)
 		{
 			Name:        "Form Group with Custom Control",
 			Pattern:     regexp.MustCompile(`form-group`),
 			Replacement: "mb-3",
 			Description: "form-group → mb-3 (or other margin utility)",
 		},
-
-		// Additional utility migrations
 		{
 			Name:        "Left alignment",
 			Pattern:     regexp.MustCompile(`text-left`),
