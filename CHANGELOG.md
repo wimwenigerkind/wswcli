@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.4.0] - 2025-07-21
+## [v2.4.0] - 2025-07-21
 
 ### Added
 - **Bootstrap 4 to 5 Migration command** (`bs-4-to-5`) for automated migration of HTML and Twig templates
 
-## [2.3.0] - 2025-07-17
+## [v2.3.0] - 2025-07-17
 
 ### Added
 - Configuration support for the `patchvendor` command, enabling flexible patch generation and improved diff path handling
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced vendor path validation in patch tests to ensure correct relative paths and proper `a/b` prefix formatting
 - Refactored patchvendor test cases for more accurate path expectations and robust validation
 
-## [2.2.0] - 2025-07-10
+## [v2.2.0] - 2025-07-10
 
 ### Added
 - **TwigBlocks command** for finding duplicate Twig blocks in Shopware/Symfony projects
@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved Docker authentication for GitHub Container Registry in CI/CD
 - Fixed GoReleaser configuration compatibility with version 2
 
-## [2.1.0] - 2025-07-10
+## [v2.1.0] - 2025-07-10
 
 ### Added
 - Docker support with multi-architecture images (AMD64, ARM64)
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added missing `packages: write` permission for Docker image publishing to GitHub Container Registry
 - Docker authentication issue preventing image publishing to GitHub Container Registry
 
-## [2.0.0] - 2025-07-05
+## [v2.0.0] - 2025-07-05
 
 ### Added
 - Homebrew installation support via custom tap
@@ -80,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Performance improvements in diff generation
 
-## [1.0.0] - 2025-07-04
+## [v1.0.0] - 2025-07-04
 
 ### Added
 - Initial stable release of wswcli

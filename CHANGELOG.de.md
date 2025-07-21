@@ -7,12 +7,12 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unveröffentlicht]
 
-## [2.4.0] - 2025-07-21
+## [v2.4.0] - 2025-07-21
 
 ### Hinzugefügt
 - **Bootstrap 4 zu 5 Migrations-Befehl** (`bs-4-to-5`) für automatisierte Migration von HTML- und Twig-Templates
 
-## [2.3.0] - 2025-07-17
+## [v2.3.0] - 2025-07-17
 
 ### Hinzugefügt
 - Konfigurationsunterstützung für den `patchvendor`-Befehl, ermöglicht flexible Patch-Erstellung und verbesserte Diff-Pfad-Behandlung
@@ -22,7 +22,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Verbesserte Validierung des Vendor-Pfads in Patch-Tests für korrekte relative Pfade und richtiges `a/b`-Präfix-Format
 - Patchvendor-Testfälle für genauere Pfaderwartungen und robuste Validierung refaktoriert
 
-## [2.2.0] - 2025-07-10
+## [v2.2.0] - 2025-07-10
 
 ### Hinzugefügt
 - **TwigBlocks-Befehl** zum Finden von duplizierten Twig-Blöcken in Shopware/Symfony-Projekten
@@ -50,7 +50,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Docker-Authentifizierung für GitHub Container Registry in CI/CD behoben
 - GoReleaser-Konfiguration Kompatibilität mit Version 2 behoben
 
-## [2.1.0] - 2025-07-10
+## [v2.1.0] - 2025-07-10
 
 ### Hinzugefügt
 - Docker-Unterstützung mit Multi-Architektur-Images (AMD64, ARM64)
@@ -67,7 +67,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fehlende `packages: write` Berechtigung für Docker-Image-Publishing zur GitHub Container Registry hinzugefügt
 - Docker-Authentifizierungsproblem, das das Veröffentlichen von Images zur GitHub Container Registry verhinderte
 
-## [2.0.0] - 2025-07-05
+## [v2.0.0] - 2025-07-05
 
 ### Hinzugefügt
 - Homebrew-Installation über benutzerdefinierten Tap
@@ -80,7 +80,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Behoben
 - Performance-Verbesserungen bei der Diff-Generierung
 
-## [1.0.0] - 2025-07-04
+## [v1.0.0] - 2025-07-04
 
 ### Hinzugefügt
 - Erste stabile Version von wswcli
@@ -98,28 +98,3 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Geändert
 - Projekt von ursprünglichem Namen zu wswcli umbenannt
 - Alle Konfigurationen und Dokumentationen aktualisiert, um den neuen Projektnamen zu reflektieren
-
----
-
-## Release-Hinweise
-
-### Docker-Verwendung
-Ab der unveröffentlichten Version können Sie wswcli mit Docker ausführen:
-
-```bash
-# Neueste Version (Multi-Platform)
-docker run --rm ghcr.io/wimwenigerkind/wswcli:latest --version
-
-# Spezifische Architektur
-docker run --rm ghcr.io/wimwenigerkind/wswcli:latest-arm64 --help
-```
-
-### Installationsmethoden
-- **Go**: `go install github.com/wimwenigerkind/wswcli@latest`
-- **Homebrew**: `brew install wimwenigerkind/tap/wswcli`
-- **Docker**: `docker run ghcr.io/wimwenigerkind/wswcli:latest`
-- **Binary**: Download von der [Releases-Seite](https://github.com/wimwenigerkind/wswcli/releases)
-
-[Unveröffentlicht]: https://github.com/wimwenigerkind/wswcli/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/wimwenigerkind/wswcli/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/wimwenigerkind/wswcli/releases/tag/v1.0.0
