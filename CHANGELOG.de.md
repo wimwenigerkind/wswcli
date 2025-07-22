@@ -9,6 +9,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Entfernt
 - Emojis aus der Ausgabe des Befehls `bs-4-to-5` entfernt für übersichtlicheren Text
+- Twig-Kommentare in HTML-Dateien und umgekehrt für den `bs-4-to-5`-Befehl handhaben
 
 ## [v2.4.1] - 2025-07-21
 
