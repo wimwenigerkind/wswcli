@@ -6,10 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+ 
+### Changed
+- Handle Twig comments in HTML files and vice versa for `bs-4-to-5` command
 
 ### Removed
 - Removed emojis from `bs-4-to-5` command output for cleaner text output
-- Handle Twig comments in HTML files and vice versa for `bs-4-to-5` command
+- Removed emojis from `twigblocks` command output for cleaner text output
 
 ## [v2.4.1] - 2025-07-21
 

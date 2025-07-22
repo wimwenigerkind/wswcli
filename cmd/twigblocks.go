@@ -310,12 +310,12 @@ func generateStandardReport(duplicates []DuplicateGroup, allFiles []string) erro
 	fmt.Println(strings.Repeat("=", 60))
 
 	if len(duplicates) == 0 {
-		fmt.Println("✅ No duplicate blocks found!")
+		fmt.Println("No duplicate blocks found!")
 		fmt.Printf("Scanned %d files successfully.\n", len(allFiles))
 		return nil
 	}
 
-	fmt.Printf("❌ Found %d duplicate block groups:\n\n", len(duplicates))
+	fmt.Printf("Found %d duplicate block groups:\n\n", len(duplicates))
 
 	for i, group := range duplicates {
 		fmt.Printf("%d. Block: '%s'\n", i+1, group.BlockName)
@@ -363,9 +363,9 @@ func generateBitbucketReport(duplicates []DuplicateGroup, allFiles []string) err
 
 	// Also output summary to stdout
 	if len(duplicates) == 0 {
-		fmt.Println("✅ PASSED: No duplicate Twig blocks found")
+		fmt.Println("PASSED: No duplicate Twig blocks found")
 	} else {
-		fmt.Printf("❌ FAILED: Found %d duplicate block groups in %d files\n", len(duplicates), len(allFiles))
+		fmt.Printf("FAILED: Found %d duplicate block groups in %d files\n", len(duplicates), len(allFiles))
 	}
 
 	return nil
