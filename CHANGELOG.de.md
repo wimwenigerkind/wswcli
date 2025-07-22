@@ -7,6 +7,8 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unveröffentlicht]
 
+## [v2.5.0] - 2025-07-22
+
 ### Geändert
 - Twig-Kommentare in HTML-Dateien und umgekehrt für den `bs-4-to-5`-Befehl handhaben
 
