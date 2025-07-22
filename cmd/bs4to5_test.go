@@ -638,6 +638,113 @@ func TestRegexPatterns(t *testing.T) {
 	}
 }
 
+func TestTwigCommentsInTwigFile(t *testing.T) {
+	tempDir := t.TempDir()
+	testFile := filepath.Join(tempDir, "test.html.twig")
+
+	// Create Twig file with migrations that have Twig comments (use input-group-append which fully replaces with comment)
+	content := `{% extends 'base.html.twig' %}
+
+{% block content %}
+    <div class="container">
+        <div class="input-group-append">
+            <span class="input-group-text">Button</span>
+        </div>
+    </div>
+{% endblock %}`
+
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	migrations := getBootstrapMigrations()
+
+	// Process the Twig file
+	originalDryRun := dryRun
+	dryRun = false
+	defer func() { dryRun = originalDryRun }()
+
+	changes, err := processFile(testFile, migrations)
+	if err != nil {
+		t.Fatalf("processFile failed for Twig file: %v", err)
+	}
+
+	if changes == 0 {
+		t.Error("Expected to make changes to Twig file")
+	}
+
+	// Read result
+	afterContent, err := os.ReadFile(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	afterString := string(afterContent)
+
+	// Should contain Twig comments {# #}, not HTML comments <!-- -->
+	if !strings.Contains(afterString, "{# TODO:") {
+		t.Errorf("Twig file should contain Twig comment format {# #}, got: %s", afterString)
+	}
+
+	if strings.Contains(afterString, "<!-- TODO:") {
+		t.Error("Twig file should not contain HTML comment format <!-- -->")
+	}
+}
+
+func TestTwigCommentsInHTMLFile(t *testing.T) {
+	tempDir := t.TempDir()
+	testFile := filepath.Join(tempDir, "test.html")
+
+	// Create HTML file with migrations that have Twig comments (use input-group-append which fully replaces with comment)
+	content := `<!DOCTYPE html>
+<html>
+<body>
+    <div class="container">
+        <div class="input-group-append">
+            <span class="input-group-text">Button</span>
+        </div>
+    </div>
+</body>
+</html>`
+
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	migrations := getBootstrapMigrations()
+
+	// Process the HTML file
+	originalDryRun := dryRun
+	dryRun = false
+	defer func() { dryRun = originalDryRun }()
+
+	changes, err := processFile(testFile, migrations)
+	if err != nil {
+		t.Fatalf("processFile failed for HTML file: %v", err)
+	}
+
+	if changes == 0 {
+		t.Error("Expected to make changes to HTML file")
+	}
+
+	// Read result
+	afterContent, err := os.ReadFile(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	afterString := string(afterContent)
+
+	// Should contain HTML comments <!-- -->, not Twig comments {# #}
+	if !strings.Contains(afterString, "<!--  TODO:") {
+		t.Errorf("HTML file should contain HTML comment format <!--  TODO:, got: %s", afterString)
+	}
+
+	if strings.Contains(afterString, "{# TODO:") {
+		t.Error("HTML file should not contain Twig comment format {# #}")
+	}
+}
+
 func TestIntegrationFullWorkflow(t *testing.T) {
 	// Test the complete workflow from finding files to applying migrations
 	tempDir := t.TempDir()

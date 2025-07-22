@@ -166,8 +166,14 @@ func processFile(filename string, migrations []BootstrapMigration) (int, error) 
 	// Apply all migrations
 	for _, migration := range migrations {
 		matches := migration.Pattern.FindAllString(modifiedContent, -1)
+		replacement := migration.Replacement
+		if strings.Contains(replacement, "{#") && strings.Contains(replacement, "#}") && strings.HasSuffix(strings.ToLower(filename), ".html") {
+			// Change twig comments {# #} to html comments <!-- --> for HTML files
+			replacement = strings.ReplaceAll(replacement, "{#", "<!-- ")
+			replacement = strings.ReplaceAll(replacement, "#}", " -->")
+		}
 		if len(matches) > 0 {
-			newContent := migration.Pattern.ReplaceAllString(modifiedContent, migration.Replacement)
+			newContent := migration.Pattern.ReplaceAllString(modifiedContent, replacement)
 			if newContent != modifiedContent {
 				changeCount += len(matches)
 				modifiedContent = newContent
@@ -446,13 +452,13 @@ func getBootstrapMigrations() []BootstrapMigration {
 		{
 			Name:        "Input Group Structure",
 			Pattern:     regexp.MustCompile(`input-group-(append|prepend)`),
-			Replacement: "<!-- TODO: input-group-append/prepend removed - Restructure completely: https://getbootstrap.com/docs/5.2/forms/input-group/ -->",
+			Replacement: "input-group-$1 {# TODO: input-group-append/prepend removed - Restructure completely: https://getbootstrap.com/docs/5.2/forms/input-group/ #}",
 			Description: "input-group-append/prepend removed - Requires manual restructuring",
 		},
 		{
 			Name:        "Custom File Input",
 			Pattern:     regexp.MustCompile(`custom-file-input`),
-			Replacement: "<!-- TODO: custom-file-input removed - Use new file input: https://getbootstrap.com/docs/5.2/forms/form-control/#file-input -->",
+			Replacement: "custom-file-input {# TODO: custom-file-input removed - Use new file input: https://getbootstrap.com/docs/5.2/forms/form-control/#file-input #}",
 			Description: "Custom file input removed - Requires complete redesign",
 		},
 		{
@@ -464,25 +470,25 @@ func getBootstrapMigrations() []BootstrapMigration {
 		{
 			Name:        "JavaScript Initialization",
 			Pattern:     regexp.MustCompile(`\$\('\.(dropdown|tooltip|popover|modal|carousel|collapse)'\).*?\(\);?`),
-			Replacement: "<!-- TODO: jQuery initialization removed - Use new API: https://getbootstrap.com/docs/5.2/getting-started/javascript/#usage -->",
+			Replacement: "$1 {# TODO: jQuery initialization removed - Use new API: https://getbootstrap.com/docs/5.2/getting-started/javascript/#usage #}",
 			Description: "jQuery initialization → Vanilla JS initialization",
 		},
 		{
 			Name:        "Breadcrumb Separator",
 			Pattern:     regexp.MustCompile(`breadcrumb-item`),
-			Replacement: "breadcrumb-item <!-- TODO: Remove manual separators - Now via CSS: https://getbootstrap.com/docs/5.2/components/breadcrumb/#changing-the-separator -->",
+			Replacement: "breadcrumb-item {# TODO: Remove manual separators - Now via CSS: https://getbootstrap.com/docs/5.2/components/breadcrumb/#changing-the-separator #}",
 			Description: "Breadcrumb separators now via CSS (remove manual separators)",
 		},
 		{
 			Name:        "Close Button Content",
 			Pattern:     regexp.MustCompile(`&times;`),
-			Replacement: "<!-- TODO: Replace &times; with SVG icon: https://getbootstrap.com/docs/5.2/components/close-button/ -->",
+			Replacement: "&times; {# TODO: Replace &times; with SVG icon: https://getbootstrap.com/docs/5.2/components/close-button/ #}",
 			Description: "&times; must be replaced with SVG icon",
 		},
 		{
 			Name:        "Navbar Toggle Icon",
 			Pattern:     regexp.MustCompile(`navbar-toggler-icon`),
-			Replacement: "navbar-toggler-icon <!-- TODO: Use SVG icon instead: https://getbootstrap.com/docs/5.2/components/navbar/#toggler -->",
+			Replacement: "navbar-toggler-icon {# TODO: Use SVG icon instead: https://getbootstrap.com/docs/5.2/components/navbar/#toggler #}",
 			Description: "Navbar toggle requires SVG instead of icon font",
 		},
 		{
@@ -518,19 +524,19 @@ func getBootstrapMigrations() []BootstrapMigration {
 		{
 			Name:        "Responsive Tables",
 			Pattern:     regexp.MustCompile(`table-responsive(-\w+)?`),
-			Replacement: "table-responsive$1 <!-- TODO: Use wrapper div instead: https://getbootstrap.com/docs/5.2/content/tables/#responsive-tables -->",
+			Replacement: "table-responsive$1 {# TODO: Use wrapper div instead: https://getbootstrap.com/docs/5.2/content/tables/#responsive-tables #}",
 			Description: "Responsive tables now require wrapper div",
 		},
 		{
 			Name:        "Tooltip/Popover Positioning",
 			Pattern:     regexp.MustCompile(`bs-tooltip-[top|bottom|left|right]`),
-			Replacement: "<!-- TODO: Update placement attributes (e.g., 'left' → 'start'): https://getbootstrap.com/docs/5.2/components/tooltips/#position -->",
+			Replacement: "bs-tooltip-$1 {# TODO: Update placement attributes (e.g., 'left' → 'start'): https://getbootstrap.com/docs/5.2/components/tooltips/#position #}",
 			Description: "Positioning attributes changed (e.g., 'left' → 'start')",
 		},
 		{
 			Name:        "Input Group Text",
 			Pattern:     regexp.MustCompile(`input-group-text`),
-			Replacement: "input-group-text <!-- TODO: Restructure without wrapper div: https://getbootstrap.com/docs/5.2/forms/input-group/ -->",
+			Replacement: "input-group-text {# TODO: Restructure without wrapper div: https://getbootstrap.com/docs/5.2/forms/input-group/ #}",
 			Description: "input-group-text no longer needs wrapper div",
 		},
 	}
